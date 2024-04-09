@@ -1,0 +1,56 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+@using Interface;
+@using ProductAssesment.ClientModel
+<h1>Stock Details</h1>
+<div>
+  
+    <div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Location</th>
+                    <th>Price</th>
+                    <th>Stock Qty</th>
+                    <th>Allocated Qty</th>
+                    <th>Date</th>
+                  
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var stk in stockList)
+                {
+                    <tr>
+                        <td>@(stk.ProductModel.Code + "-" + stk.ProductModel.Name)</td>
+                        <td>@(stk.LocationModel.Code + "-" + stk.LocationModel.Name)</td>
+                        <td>@stk.ProductModel.UnitPrice</td>
+                        <td>@stk.ProductModel.StockAvailable</td>
+                        <td>@stk.AllocatedQty</td>
+                        <td>@stk.AllocatedDate</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+
+   
+    List<StockAllocationModel> stockList = new List<StockAllocationModel>();
+    [Inject] IStkAllocationService stockSvc { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        GetAllStock();
+    }
+
+    private async void GetAllStock()
+    {
+
+        stockList = await stockSvc.GetAllStockAllocationDetails();
+
+    }
+}

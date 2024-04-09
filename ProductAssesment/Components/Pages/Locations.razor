@@ -1,0 +1,100 @@
+﻿@page "/location"
+@rendermode InteractiveServer
+@using Interface;
+@using ProductAssesment.ClientModel
+<PageTitle>Location</PageTitle>
+<div>
+    <div>
+        <div class="mb-2">
+            <label for="Code">Code</label>
+            <input type="text" @bind="@model.Code" placeholder="Code" />
+        </div>
+        <div class="mb-2">
+            <label for="Name">Name</label>
+            <input type="text" @bind="@model.Name" placeholder="Name" />
+        </div>
+        
+        <div>
+            <button @onclick="() =>SaveLocation(model)">Save</button>
+            <button @onclick="Clear">Clear</button>
+        </div>
+
+    </div>
+    <div>
+        <table class="table">
+            <thead>
+                <tr>
+                      <th>Id</th>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var loc in LocationList)
+                {
+                    <tr>
+                        <td>@loc.Id</td>
+                        <td>@loc.Code</td>
+                        <td>@loc.Name</td>
+                        <td><button @onclick="() => EditLocation(loc)">Edit</button></td>
+                        <td><button @onclick="() => DeleteLocation(loc.Id)">Delete</button></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+
+    private bool IsCreate { get; set; }
+    List<LocationModel> LocationList = new List<LocationModel>();
+    LocationModel model = new LocationModel();
+    [Inject] ILocationService locationSvc { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        IsCreate = true;
+        GetAllLocations();
+    }
+
+    private async Task SaveLocation(LocationModel model)
+    {
+        if (IsCreate)
+        {
+            await locationSvc.AddLocation(model);
+            IsCreate = true;
+        }
+        else
+        {
+            await locationSvc.UpdateLocation(model);
+            IsCreate = false;
+        }
+        Clear();
+        GetAllLocations();
+    }
+    private void EditLocation(LocationModel productDetails)
+    {
+        IsCreate = false;
+        model = productDetails;
+        //GetAllProducts();
+    }
+    private async void DeleteLocation(long id)
+    {
+        await locationSvc.RemoveLocation(id);
+        GetAllLocations();
+
+    }
+    private async void GetAllLocations()
+    {
+
+        LocationList = await locationSvc.GetLocations();
+    }
+    private void Clear()
+    {
+        model.Code = "";
+        model.Name = "";
+        model.Id = 0;
+    }
+}

@@ -1,0 +1,144 @@
+﻿@page "/stk"
+@rendermode InteractiveServer
+@using Interface;
+@using ProductAssesment.ClientModel
+<PageTitle>Product</PageTitle>
+<div>
+    <div>
+        <div class="mb-2">
+            <label for="ProductList">Product</label>
+
+            <select class="form-control" id="ProductList" @bind="selectedProduct">
+                <option value=-1>-- Select One --</option>
+                @if (Products != null)
+                {
+                    @foreach (var item in Products)
+                    {
+                        <option value="@item.Id">@item.Name</option>
+                    }
+                }
+            </select>
+
+        </div>
+        <div class="mb-2">
+            <label for="LocationList">Location</label>
+
+            <select class="form-control" id="LocationList" @bind="selectedLocation">
+                <option value=-1>-- Select One --</option>
+                @if (Locations != null)
+                {
+                    @foreach (var item in Locations)
+                    {
+                        <option value="@item.Id">@item.Name</option>
+                    }
+                }
+            </select>
+
+        </div>
+        <div class="mb-2">
+            <label for="Price">Unit Price</label>
+            <input type="number" @bind="@unitPrice" placeholder="Price" disabled="true"/>
+        </div>
+        <div class="mb-2">
+            <label for="StkQty">Stock Quantity</label>
+            <input type="number" @bind="@stockAvailable" placeholder="Quantity" disabled="true"/>
+        </div>
+        <div class="mb-2">
+            <label for="Qty">Allocated Quantity</label>
+            <input type="number" @bind="@allocated" placeholder="Allocated Quantity"/>
+        </div>
+        <div>
+            <button @onclick="SaveStock">Save</button>
+            <button @onclick="Clear">Clear</button>
+        </div>
+
+    </div>
+  
+</div>
+
+@code {
+
+    private bool IsCreate { get; set; }
+    private long _selectedProduct { get; set; }
+
+    public long selectedProduct
+    {
+        get { return _selectedProduct; }
+        set
+        {
+            if (_selectedProduct != value)
+            {
+                _selectedProduct = value;
+                HandleProductChange(_selectedProduct); // Call method to handle the change
+            }
+        }
+    }
+    private long _selectedLocation { get; set; }
+    public long selectedLocation
+    {
+        get { return _selectedLocation; }
+        set
+        {
+            if (_selectedLocation != value)
+            {
+                _selectedLocation = value;
+            }
+        }
+    }
+    private decimal unitPrice { get; set; }
+    private decimal stockAvailable { get; set; }
+    private decimal allocated { get; set; }
+    List<ProductModel> Products = new List<ProductModel>();
+    List<LocationModel> Locations = new List<LocationModel>();
+    StockAllocationModel model = new StockAllocationModel();
+    [Inject] IProductService productSvc { get; set; }
+    [Inject] ILocationService locationSvc { get; set; }
+    [Inject] IStkAllocationService stockSvc { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        IsCreate = true;
+        GetAllProducts();
+        GetAllLocations();
+    }
+
+    private async Task SaveStock()
+    {
+        model.LocationId = selectedLocation;
+        model.ProductId = selectedProduct;
+        model.AllocatedQty = allocated;
+        await stockSvc.AddStocktoLocation(model);
+        HandleProductChange(selectedProduct);
+
+    }
+
+
+    private async void GetAllProducts()
+    {
+
+        Products = await productSvc.GetProducts();
+
+    }
+    private async void GetAllLocations()
+    {
+
+        Locations = await locationSvc.GetLocations();
+    }
+    private void Clear()
+    {
+        selectedProduct = -1;
+        selectedLocation = -1;
+        unitPrice = 0;
+        stockAvailable = 0;
+        allocated = 0;
+    }
+    private async void HandleProductChange(long value)
+    {
+        if (value != -1)
+        {
+            var prodDetails = await productSvc.GetProductById(value);
+            unitPrice = prodDetails.UnitPrice;
+            stockAvailable = prodDetails.StockAvailable;
+        }
+    }
+    
+}

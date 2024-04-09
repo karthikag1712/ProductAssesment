@@ -1,0 +1,114 @@
+﻿@page "/product"
+@rendermode InteractiveServer
+@using Interface;
+@using ProductAssesment.ClientModel
+<PageTitle>Product</PageTitle>
+<div>
+<div>
+    <div class="mb-2">
+            <label for="Code">Code</label>
+            <input type="text" @bind="@model.Code" placeholder="Code" />
+    </div>
+    <div class="mb-2">
+            <label for="Name">Name</label>
+            <input type="text" @bind="@model.Name" placeholder="Name" />
+    </div>
+    <div class="mb-2">
+        <label for="Price">Unit Price</label>
+            <input type="number" @bind="@model.UnitPrice" placeholder="Price" />
+    </div>
+    <div class="mb-2">
+        <label for="Qty">Quantity</label>
+            <input type="number" @bind="@model.StockAvailable" placeholder="Quantity" />
+    </div>
+
+    <div>
+            <button @onclick="() =>SaveProduct(model)">Save</button>
+            <button @onclick="Clear">Clear</button>
+    </div>
+    
+</div>
+<div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var product in Products)
+                {
+                    <tr>
+                       <td>@product.Id</td> 
+                        <td>@product.Code</td>
+                        <td>@product.Name</td>
+                        <td>@product.UnitPrice</td>
+                        <td>@product.StockAvailable</td>
+                        <td><button @onclick="() => EditProduct(product)">Edit</button></td>
+                        <td><button @onclick="() => DeleteProduct(product.Id)">Delete</button></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+</div>
+</div>
+
+@code {
+
+    private bool IsCreate { get; set; }
+    List<ProductModel> Products = new List<ProductModel>();
+    ProductModel model = new ProductModel();
+    [Inject] IProductService productSvc { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        IsCreate = true;
+        GetAllProducts();
+    }
+
+    private async Task SaveProduct(ProductModel model)
+    {
+        if (IsCreate)
+        {
+            await productSvc.AddProduct(model);
+            IsCreate = true;
+        }
+        else
+        {
+            await productSvc.UpdateProduct(model);
+            IsCreate = false;
+        }
+        Clear();
+        GetAllProducts();
+    }
+    private void EditProduct(ProductModel productDetails)
+    {
+        IsCreate = false;
+        model = productDetails;
+        //GetAllProducts();
+    }
+    private async void DeleteProduct(long id)
+    {
+        await productSvc.RemoveProduct(id);
+        GetAllProducts();
+
+    }
+    private async void GetAllProducts()
+    {
+       
+        Products = await productSvc.GetProducts();
+    }
+    private void Clear()
+    {
+        model.Code = "";
+        model.Name = "";
+        model.UnitPrice = 0;
+        model.StockAvailable = 0;
+        model.Id = 0;
+    }
+}
